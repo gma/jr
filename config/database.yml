@@ -1,0 +1,29 @@
+<% 
+def get_mysql_password
+  `python -c 'import ConfigParser; p = ConfigParser.SafeConfigParser(); p.read("#{ENV['HOME']}/.my.cnf"); print p.get("mysql", "password")'`
+end
+%>
+
+mysql: &mysql
+  adapter: mysql
+  username: root
+  password: _root_
+  host: localhost
+  socket: <%= [
+    '/var/lib/mysql/mysql.sock',
+    '/var/run/mysqld/mysqld.sock',
+    '/tmp/mysqld.sock',
+    '/tmp/mysql.sock',
+  ].detect { |socket| File.exist?(socket) } %>
+
+development:
+  database: scheduler_development
+  <<: *mysql
+
+test: &test
+  database: scheduler_test
+  <<: *mysql
+
+production:
+  database: scheduler_production
+  <<: *mysql
