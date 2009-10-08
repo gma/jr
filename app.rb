@@ -12,3 +12,5 @@ ActiveRecord::Base.establish_connection(Scheduler::Configuration.database)
 log = Logger.new(STDOUT)
 log.level = Logger::DEBUG
 
+class Job < ActiveRecord::Base
+end

@@ -1,4 +1,8 @@
-require File.join(File.dirname(__FILE__), *%w[.. app])
+require "rubygems"
+require "sinatra"
+
+set :environment, :test
+
 require 'test/unit'
 require 'rack/test'
 require 'shoulda'
@@ -6,7 +10,12 @@ require 'rake'
 require 'sinatra/activerecord/rake'
 require 'active_support/testing/assertions'
 
-set :environment, :test
+require File.join(File.dirname(__FILE__), *%w[.. app])
+
+class NullLogger
+  def method_missing(*args)
+  end
+end
 
 class SchedulerTest < Test::Unit::TestCase
   include Rack::Test::Methods
@@ -15,18 +24,22 @@ class SchedulerTest < Test::Unit::TestCase
   def app
     Sinatra::Application
   end
+  
+  def reset_database
+    ActiveRecord::Base.logger = NullLogger.new
+    ActiveRecord::Migration.verbose = false
+    ActiveRecord::Migrator.migrate('db/migrate', 0)
+    ActiveRecord::Migrator.migrate('db/migrate', nil)
+  end
 
   def setup
-    ENV["VERSION"] = "0"
-    Rake::Task["db:migrate"].invoke
-    ENV.delete("VERSION")
-    Rake::Task["db:migrate"].invoke
+    reset_database
   end
 
   context "POST /jobs" do
-    should_eventually "create a new job with state running" do
+    should "create a new job with state running" do
       assert_difference "Job.count" do
-        post "/jobs"
+        post "/jobs", :type => "unskilled"
       end
     end
   end
