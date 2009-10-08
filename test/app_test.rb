@@ -104,12 +104,31 @@ class AppTest < Test::Unit::TestCase
   end
 
   context "GET /jobs/123" do
+    setup do
+      do_post
+      @job = Job.last
+    end
+    
     should "return not found if job doesn't exist" do
-      get "/jobs/123"
+      get "/jobs/#{@job.id + 1}"
       assert last_response.not_found?
     end
     
-    should_eventually "clear up zombie processes" do
+    should "return the job status" do
+      get "/jobs/#{@job.id}"
+      assert_equal "running", last_response.body
+    end
+    
+    context "when job has a message" do
+      setup do
+        @message = "sorted"
+        @job.update_attributes!(:state => "complete", :message => @message)
+      end
+      
+      should "return the job's message" do
+        get "/jobs/#{@job.id}"
+        assert_equal "complete: #{@message}", last_response.body
+      end
     end
   end  
 end

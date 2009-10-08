@@ -19,13 +19,24 @@ post "/jobs" do
   job.id.to_s
 end
 
-put "/jobs/:id" do
+def find_job(id)
   job = Job.find_by_id(params[:id])
   raise Sinatra::NotFound unless job
+  job
+end
+
+put "/jobs/:id" do
+  job = find_job(params[:id])
   job.update_attributes!(:state => params["state"], :message => params["message"])
   config = Scheduler::Configuration.job(job.name)
   Job.run_queued_jobs(job.name, config)
   nil
+end
+
+get "/jobs/:id" do
+  job = find_job(params[:id])
+  return "#{job.state}: #{job.message}" if job.message
+  job.state
 end
 
 class Job < ActiveRecord::Base
