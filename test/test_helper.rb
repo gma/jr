@@ -19,12 +19,12 @@ module SchedulerTest
     Sinatra::Application
   end
   
-  def define_job(name, command)
+  def define_job(name, command, limit)
     test_file = "/tmp/scheduler-config.yml"
     Scheduler::Configuration.stubs(:file).returns(test_file)
     File.open(test_file, "w") do |file|
-      file.write("#{name}:\n  #{command}")
+      file.write("#{name}:\n  command: #{command}\n  concurrent_limit: #{limit}")
     end
-    [name, command]
+    [name, command, limit]
   end
 end

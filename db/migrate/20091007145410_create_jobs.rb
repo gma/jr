@@ -1,7 +1,7 @@
 class CreateJobs < ActiveRecord::Migration
   def self.up
     create_table :jobs, :force => true do |t|
-      t.string :state
+      t.string :name, :state
       t.integer :pid
       t.text :message
       t.timestamps

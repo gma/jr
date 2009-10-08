@@ -1,2 +1,3 @@
 #!/bin/sh
 echo $* > /tmp/scheduler-test-output
+echo $$ > /tmp/scheduler-command.pid
