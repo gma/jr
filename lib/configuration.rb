@@ -13,20 +13,10 @@ module Scheduler
       File.join(File.dirname(__FILE__), *%w[.. config config.yml])
     end
     
-    def self.command(name)
-      job_setting(name, "command")
-    end
-    
-    def self.concurrent_limit(name)
-      job_setting(name, "concurrent_limit")
-    end
-    
-    def self.job_setting(name, setting)
+    def self.job(name)
       jobs = load_yaml(file)
-      unless jobs.has_key?(name) && jobs[name].has_key?(setting)
-        raise "job not found: #{name}" 
-      end
-      jobs[name][setting]
+      raise "job not found: #{name}" unless jobs.has_key?(name)
+      jobs[name]
     end
   end
 end

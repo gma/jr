@@ -3,7 +3,7 @@ class CreateJobs < ActiveRecord::Migration
     create_table :jobs, :force => true do |t|
       t.string :name, :state
       t.integer :pid
-      t.text :message
+      t.text :arguments, :message
       t.timestamps
     end
   end

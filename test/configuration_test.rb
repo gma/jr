@@ -8,23 +8,15 @@ class ConfigurationTest < Test::Unit::TestCase
       @name, @command, @limit = define_job("unskilled", "a command", 5)
     end
     
-    should "return the command to run for a job" do
-      assert_equal @command, Scheduler::Configuration.command(@name)
+    should "return the command and concurrent limit for a job" do
+      assert_equal(
+          { "command" => @command, "concurrent_limit" => @limit }, 
+          Scheduler::Configuration.job(@name))
     end
-    
-    should "return the max number of concurrent commands for a job" do
-      assert_equal @limit, Scheduler::Configuration.concurrent_limit(@name)
-    end    
     
     should "raise if the job name doesn't exist in the configuration" do
       assert_raise RuntimeError do
-        Scheduler::Configuration.command("holiday")
-      end
-    end
-    
-    should "raise if a job setting doesn't exist in the configuration" do
-      assert_raise RuntimeError do
-        Scheduler::Configuration.job_setting(@name, "bad setting")
+        Scheduler::Configuration.job("holiday")
       end
     end
   end
