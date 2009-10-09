@@ -27,6 +27,12 @@ class AppTest < Test::Unit::TestCase
     Process.wait if options[:wait]
   end
   
+  def timer(&block)
+    start = Time.now
+    yield
+    Time.now - start
+  end
+  
   context "POST /jobs" do
     should "create a new job with state running" do
       assert_difference("Job.count") { do_post }
@@ -112,8 +118,12 @@ class AppTest < Test::Unit::TestCase
         @name, @command, @limit = define_job("part-time", "sleep 30", 2)
         post "/jobs", { :name => "part-time", :arguments => "" }
         job = Job.last
-        put "/jobs/#{job.id}", :state => "cancelled"
-        assert ! system("ps -p #{job.pid} >/dev/null")
+        time_to_die = timer do
+          put "/jobs/#{job.id}", :state => "cancelled"
+          Process.waitall
+        end
+        long_winded_unix_death = 5  # allows the process plenty of time to die
+        assert time_to_die < long_winded_unix_death
       end
     end
   end
