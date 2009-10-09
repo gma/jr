@@ -5,7 +5,6 @@ set :environment, :test
 require 'test/unit'
 require 'rack/test'
 require 'mocha'
-# require "fakefs"
 require 'shoulda'
 require 'active_support/testing/assertions'
 
