@@ -12,6 +12,12 @@ ActiveRecord::Base.establish_connection(Scheduler::Configuration.database)
 log = Logger.new(STDOUT)
 log.level = Logger::DEBUG
 
+def find_job(id)
+  job = Job.find_by_id(params[:id])
+  raise Sinatra::NotFound unless job
+  job
+end
+
 post "/jobs" do
   config = Scheduler::Configuration.job(params[:name])
   job = Job.process(params[:name], config, params[:arguments])
@@ -19,16 +25,11 @@ post "/jobs" do
   job.id.to_s
 end
 
-def find_job(id)
-  job = Job.find_by_id(params[:id])
-  raise Sinatra::NotFound unless job
-  job
-end
-
 put "/jobs/:id" do
   job = find_job(params[:id])
   job.update_attributes!(:state => params["state"], :message => params["message"])
   config = Scheduler::Configuration.job(job.name)
+  params["state"] == "cancelled" && job.kill
   Job.run_queued_jobs(job.name, config)
   nil
 end
@@ -51,7 +52,8 @@ class Job < ActiveRecord::Base
   end
   
   def self.queue(name, arguments)
-    self.create!(:name => name, :state => "queued", :arguments => arguments)
+    reap_children
+    create!(:name => name, :state => "queued", :arguments => arguments)
   end
   
   def self.process(name, config, arguments)
@@ -62,13 +64,18 @@ class Job < ActiveRecord::Base
     job
   end
   
+  def self.reap_children
+    Process.wait(-1, Process::WNOHANG)
+  rescue Errno::ECHILD
+  end
+  
   def self.run_queued_jobs(name, config)
     (config["concurrent_limit"] - running_jobs_count(name)).times do
       job = Job.find_by_name_and_state(name, "queued")
       break unless job
       job.run(config["command"])
     end
-    Process.waitall
+    reap_children
   end
   
   def run(command)
@@ -77,5 +84,10 @@ class Job < ActiveRecord::Base
       exit!
     end
     update_attributes!(:state => "running", :pid => pid)
+  end
+  
+  def kill
+    Process.kill("TERM", pid)
+  rescue Errno::ESRCH
   end
 end

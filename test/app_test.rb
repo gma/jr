@@ -75,17 +75,25 @@ class AppTest < Test::Unit::TestCase
     end
     
     should "return not found if job doesn't exist" do
-      put "/jobs/#{@job.id + 1}", { :state => "complete" }
+      put "/jobs/#{@job.id + 1}", :state => "complete"
       assert last_response.not_found?
     end
     
-    should "update the job's state to complete" do
-      put "/jobs/#{@job.id}", { :state => "complete" }
-      assert last_response.ok?
-      assert_equal "complete", Job.find(@job.id).state
+    context "when the script sends complete" do
+      should "update the job's state to complete" do
+        put "/jobs/#{@job.id}", :state => "complete"
+        assert last_response.ok?
+        assert_equal "complete", Job.find(@job.id).state
+      end
+    
+      should "run queued jobs" do
+        @limit.times { do_post(:wait => false) }
+        put "/jobs/#{Job.first.id}", :state => "complete"
+        assert_equal "running", Job.last.state
+      end
     end
     
-    context "when script sends an error message" do
+    context "when the script sends an error message" do
       should "store the error" do
         put "/jobs/#{@job.id}", :state => "error", :message => "Borked"
         @job.reload
@@ -94,11 +102,18 @@ class AppTest < Test::Unit::TestCase
       end
     end
     
-    context "when jobs queued and job completes" do
-      should "run a queued job" do
-        @limit.times { do_post(:wait => false) }
-        put "/jobs/#{Job.first.id}", :state => "complete"
-        assert_equal "running", Job.last.state
+    context "when the job is to be cancelled" do
+      should "update the job's state to cancelled" do
+        put "/jobs/#{@job.id}", :state => "cancelled"
+        assert_equal "cancelled", Job.find(@job.id).state
+      end
+      
+      should "kill the job's script if it is running" do
+        @name, @command, @limit = define_job("part-time", "sleep 30", 2)
+        post "/jobs", { :name => "part-time", :arguments => "" }
+        job = Job.last
+        put "/jobs/#{job.id}", :state => "cancelled"
+        assert ! system("ps -p #{job.pid} >/dev/null")
       end
     end
   end
