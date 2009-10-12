@@ -14,6 +14,14 @@ Rake::TestTask.new(:test) do |t|
   t.verbose = true
 end
 
+namespace :db do
+  desc "Create the database"
+  task :create do
+    environ = (ENV['RACK_ENV'] || 'development').downcase
+    system "mysqladmin create scheduler_#{environ}"
+  end
+end
+
 namespace :gems do
   desc "Install dependencies (set RACK_ENV=test for tests)"
   task :install do
