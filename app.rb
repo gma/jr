@@ -6,11 +6,10 @@ require "rubygems"
 require "sinatra"
 require File.join(File.dirname(__FILE__), *%w[lib configuration])
 require File.join(File.dirname(__FILE__), *%w[lib models])
+require File.join(File.dirname(__FILE__), *%w[lib database])
 
-log = Logger.new(STDOUT)
-log.level = Logger::DEBUG
-
-ActiveRecord::Base.establish_connection(Scheduler::Configuration.database)
+$log = Logger.new(STDOUT)
+$log.level = Logger::DEBUG
 
 def find_job(id)
   job = Job.find_by_id(params[:id])
@@ -18,11 +17,29 @@ def find_job(id)
   job
 end
 
+def info(message)
+  $log.info message
+end
+
+def warn(exception)
+  $log.warn "WARNING: #{exception}"
+end
+
+def error(exception)
+  $log.error "ERROR: #{exception}"
+end
+
 post "/jobs" do
-  config = Scheduler::Configuration.job(params[:name])
-  job = Job.process(params[:name], config, params[:arguments])
-  status(202)  # accepted
-  job.id.to_s
+  $log.debug "Received request to run a '#{params[:name]}' job"
+  begin
+    config = Scheduler::Configuration.job(params[:name])
+    info "Starting job: '#{params[:name]}', arguments='#{params[:arguments]}'"
+    job = Job.process(params[:name], config, params[:arguments])
+    status(202)  # accepted
+    job.id.to_s
+  rescue Scheduler::JobNotFoundError => exception
+    warn(exception)
+  end
 end
 
 put "/jobs/:id" do

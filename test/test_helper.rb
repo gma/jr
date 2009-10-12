@@ -10,6 +10,12 @@ require 'active_support/testing/assertions'
 
 require File.join(File.dirname(__FILE__), *%w[.. app])
 
+class Logger
+  # Quieten the logger during testing.
+  def add(*args)
+  end
+end
+
 module SchedulerTest
   include Rack::Test::Methods
   include ActiveSupport::Testing::Assertions

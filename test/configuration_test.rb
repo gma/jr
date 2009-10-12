@@ -15,7 +15,7 @@ class ConfigurationTest < Test::Unit::TestCase
     end
     
     should "raise if the job name doesn't exist in the configuration" do
-      assert_raise RuntimeError do
+      assert_raise Scheduler::JobNotFoundError do
         Scheduler::Configuration.job("holiday")
       end
     end

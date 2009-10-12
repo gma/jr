@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+irb = RUBY_PLATFORM =~ /(:?mswin|mingw)/ ? 'irb.bat' : 'irb'
+
+libs =  " -r irb/completion"
+libs <<  " -r #{File.dirname(__FILE__) + '/../lib/configuration'}"
+libs <<  " -r #{File.dirname(__FILE__) + '/../lib/models'}"
+libs <<  " -r #{File.dirname(__FILE__) + '/../lib/database'}"
+puts "Loading scheduler"
+
+exec "#{irb} #{libs} --simple-prompt"

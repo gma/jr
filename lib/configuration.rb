@@ -1,4 +1,6 @@
 module Scheduler
+  class JobNotFoundError < RuntimeError; end
+  
   class Configuration
     def self.load_yaml(file)
       YAML.load(ERB.new(IO.read(file)).result)
@@ -15,8 +17,7 @@ module Scheduler
     
     def self.job(name)
       jobs = load_yaml(file)
-      raise "job not found: #{name}" unless jobs.has_key?(name)
-      jobs[name]
+      jobs[name] or raise JobNotFoundError.new("job not found: #{name}") 
     end
   end
 end
