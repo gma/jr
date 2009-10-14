@@ -116,7 +116,7 @@ class AppTest < Test::Unit::TestCase
       
       should "kill the job's script if it is running" do
         @name, @command, @limit = define_job("part-time", "sleep 30", 2)
-        post "/jobs", { :name => "part-time", :arguments => "" }
+        post "/jobs", :name => "part-time", :arguments => ""
         job = Job.last
         time_to_die = timer do
           put "/jobs/#{job.id}", :state => "cancelled"
