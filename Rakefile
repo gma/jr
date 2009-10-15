@@ -18,7 +18,7 @@ namespace :db do
   desc "Create the database"
   task :create do
     environ = (ENV['RACK_ENV'] || 'development').downcase
-    system "mysqladmin create scheduler_#{environ}"
+    system "mysqladmin create jr_#{environ}"
   end
 end
 

@@ -32,12 +32,12 @@ end
 post "/jobs" do
   $log.debug "Received request to run a '#{params[:name]}' job"
   begin
-    config = Scheduler::Configuration.job(params[:name])
+    config = JobRunner::Configuration.job(params[:name])
     info "Starting job: '#{params[:name]}', arguments='#{params[:arguments]}'"
     job = Job.process(params[:name], config, params[:arguments])
     status(202)  # accepted
     job.id.to_s
-  rescue Scheduler::JobNotFoundError => exception
+  rescue JobRunner::JobNotFoundError => exception
     warn(exception)
   end
 end
@@ -45,7 +45,7 @@ end
 put "/jobs/:id" do
   job = find_job(params[:id])
   job.update_attributes!(:state => params["state"], :message => params["message"])
-  config = Scheduler::Configuration.job(job.name)
+  config = JobRunner::Configuration.job(job.name)
   params["state"] == "cancelled" && job.kill
   Job.run_queued_jobs(job.name, config)
   nil

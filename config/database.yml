@@ -17,13 +17,13 @@ mysql: &mysql
   ].detect { |socket| File.exist?(socket) } %>
 
 development:
-  database: scheduler_development
+  database: jr_development
   <<: *mysql
 
 test: &test
-  database: scheduler_test
+  database: jr_test
   <<: *mysql
 
 production:
-  database: scheduler_production
+  database: jr_production
   <<: *mysql

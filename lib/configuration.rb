@@ -1,4 +1,4 @@
-module Scheduler
+module JobRunner
   class JobNotFoundError < RuntimeError; end
   
   class Configuration

@@ -1,1 +1,1 @@
-ActiveRecord::Base.establish_connection(Scheduler::Configuration.database)
+ActiveRecord::Base.establish_connection(JobRunner::Configuration.database)

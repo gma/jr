@@ -16,7 +16,7 @@ class Logger
   end
 end
 
-module SchedulerTest
+module JobRunnerTest
   include Rack::Test::Methods
   include ActiveSupport::Testing::Assertions
 
@@ -25,8 +25,8 @@ module SchedulerTest
   end
   
   def define_job(name, command, limit)
-    test_file = "/tmp/scheduler-config.yml"
-    Scheduler::Configuration.stubs(:file).returns(test_file)
+    test_file = "/tmp/jr-config.yml"
+    JobRunner::Configuration.stubs(:file).returns(test_file)
     File.open(test_file, "w") do |file|
       file.write("#{name}:\n  command: #{command}\n  concurrent_limit: #{limit}")
     end

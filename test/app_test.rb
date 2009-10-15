@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), "test_helper")
 require "fileutils"
 
 class AppTest < Test::Unit::TestCase
-  include SchedulerTest
+  include JobRunnerTest
   
   def reset_database
     ActiveRecord::Base.logger = Logger.new(nil)
@@ -13,8 +13,8 @@ class AppTest < Test::Unit::TestCase
 
   def setup
     reset_database
-    @command_output = "/tmp/scheduler-test-output"
-    @command_pid = "/tmp/scheduler-command.pid"
+    @command_output = "/tmp/jr-test-output"
+    @command_pid = "/tmp/jr-command.pid"
     FileUtils.rm_f(@command_output)
     FileUtils.rm_f(@command_pid)
     @name, @command, @limit = define_job(

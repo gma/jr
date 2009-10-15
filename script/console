@@ -6,6 +6,6 @@ libs =  " -r irb/completion"
 libs <<  " -r #{File.dirname(__FILE__) + '/../lib/configuration'}"
 libs <<  " -r #{File.dirname(__FILE__) + '/../lib/models'}"
 libs <<  " -r #{File.dirname(__FILE__) + '/../lib/database'}"
-puts "Loading scheduler"
+puts "Loading jr"
 
 exec "#{irb} #{libs} --simple-prompt"
