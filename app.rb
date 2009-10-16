@@ -11,12 +11,6 @@ require File.join(File.dirname(__FILE__), *%w[lib database])
 $log = Logger.new(STDOUT)
 $log.level = Logger::DEBUG
 
-def find_job(id)
-  job = Job.find_by_id(params[:id])
-  raise Sinatra::NotFound unless job
-  job
-end
-
 def info(message)
   $log.info message
 end
@@ -27,6 +21,26 @@ end
 
 def error(exception)
   $log.error "ERROR: #{exception}"
+end
+
+def find_job
+  job = Job.find_by_id(params[:id])
+  raise Sinatra::NotFound unless job
+  job
+end
+
+def find_job_by_pid
+  job = Job.find_by_pid(params[:pid])
+  raise Sinatra::NotFound unless job
+  job
+end
+
+def update_job(job)
+  job.update_attributes!(:state => params["state"], :message => params["message"])
+  params["state"] == "cancelled" && job.kill
+  config = JobRunner::Configuration.job(job.name)
+  Job.run_queued_jobs(job.name, config)
+  nil
 end
 
 post "/jobs" do
@@ -43,16 +57,15 @@ post "/jobs" do
 end
 
 put "/jobs/:id" do
-  job = find_job(params[:id])
-  job.update_attributes!(:state => params["state"], :message => params["message"])
-  config = JobRunner::Configuration.job(job.name)
-  params["state"] == "cancelled" && job.kill
-  Job.run_queued_jobs(job.name, config)
-  nil
+  update_job(find_job)
+end
+
+put "/jobs/pid/:pid" do
+  update_job(find_job_by_pid)
 end
 
 get "/jobs/:id" do
-  job = find_job(params[:id])
+  job = find_job
   return "#{job.state}: #{job.message}" if job.message
   job.state
 end

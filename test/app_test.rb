@@ -128,6 +128,60 @@ class AppTest < Test::Unit::TestCase
     end
   end
 
+  context "PUT /jobs/pid/123" do
+    setup do
+      do_post
+      @job = Job.last
+    end
+
+    should "return not found if job doesn't exist" do
+      put "/jobs/pid/#{@job.pid + 1}", :state => "complete"
+      assert last_response.not_found?
+    end
+
+    context "when the script sends complete" do
+      should "update the job's status to complete" do
+        put "/jobs/pid/#{@job.pid}", :state => "complete"
+        assert last_response.ok?
+        assert_equal "complete", Job.find(@job.id).state
+      end
+
+      should "run queued jobs" do
+        @limit.times { do_post(:wait => false) }
+        put "/jobs/pid/#{Job.first.pid}", :state => "complete"
+        assert_equal "running", Job.last.state
+      end
+    end
+
+    context "when the script sends an error message" do
+      should "store the error" do
+        put "/jobs/pid/#{@job.pid}", :state => "error", :message => "Borked"
+        @job.reload
+        assert_equal "error", @job.state
+        assert_equal "Borked", @job.message
+      end
+    end
+    
+    context "when the job is to be cancelled" do
+      should "update the job's state to cancelled" do
+        put "/jobs/pid/#{@job.pid}", :state => "cancelled"
+        assert_equal "cancelled", Job.find(@job.id).state
+      end
+      
+      should "kill the job's script if it is running" do
+        @name, @command, @limit = define_job("part-time", "sleep 30", 2)
+        post "/jobs", :name => "part-time", :arguments => ""
+        job = Job.last
+        time_to_die = timer do
+          put "/jobs/pid/#{job.pid}", :state => "cancelled"
+          Process.waitall
+        end
+        long_winded_unix_death = 5  # allows the process plenty of time to die
+        assert time_to_die < long_winded_unix_death
+      end
+    end
+  end
+
   context "GET /jobs/123" do
     setup do
       do_post
