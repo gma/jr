@@ -43,7 +43,7 @@ def update_job(job)
   nil
 end
 
-post "/jobs" do
+post "/jobs/?" do
   $log.debug "Received request to run a '#{params[:name]}' job"
   begin
     config = JobRunner::Configuration.job(params[:name])
