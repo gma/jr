@@ -2,17 +2,15 @@ require "rubygems"
 require "sinatra"
 set :environment, :test
 
-require 'test/unit'
-require 'rack/test'
-require 'mocha'
-require 'shoulda'
-require 'active_support/testing/assertions'
-
-require File.join(File.dirname(__FILE__), *%w[.. app])
+require "test/unit"
+require "rack/test"
+require "mocha"
+require "shoulda"
+require "active_support/testing/assertions"
 
 class Logger
-  # Quieten the logger during testing.
   def add(*args)
+    # Silence the logger during testing
   end
 end
 

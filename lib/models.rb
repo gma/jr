@@ -20,6 +20,11 @@ class Job < ActiveRecord::Base
     job = queue(name, arguments)
     if Job.can_run_now?(name, config["concurrent_limit"])
       job.run(config["command"])
+    else
+      count = count(:conditions => ["name = ? AND state = 'queued'", name])
+      log.warn "Concurrent #{name} limit reached: " + \
+          "#{config["concurrent_limit"]} running, #{count} queued"
+      log.info "Queued #{name} job: #{job.id}"
     end
     job
   end
@@ -32,13 +37,16 @@ class Job < ActiveRecord::Base
   def self.run_queued_jobs(name, config)
     (config["concurrent_limit"] - running_jobs_count(name)).times do
       job = Job.find_by_name_and_state(name, "queued")
-      break unless job
-      job.run(config["command"])
+      if job
+        log.info "Running a pending #{job.name} job"
+        job.run(config["command"])
+      end
     end
     reap_children
   end
   
   def run(command)
+    log.info "Running #{name} job: #{id}"
     pid = fork do
       exec("#{command} #{arguments}")
       exit!
@@ -47,6 +55,7 @@ class Job < ActiveRecord::Base
   end
   
   def kill
+    log.info "Killing process: #{pid}"
     Process.kill("TERM", pid)
   rescue Errno::ESRCH
   end

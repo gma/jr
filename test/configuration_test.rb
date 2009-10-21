@@ -1,4 +1,5 @@
 require File.join(File.dirname(__FILE__), "test_helper")
+require File.join(File.dirname(__FILE__), *%w[.. lib configuration])
 
 class ConfigurationTest < Test::Unit::TestCase
   include JobRunnerTest

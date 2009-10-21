@@ -1,5 +1,7 @@
-require File.join(File.dirname(__FILE__), "test_helper")
 require "fileutils"
+
+require File.join(File.dirname(__FILE__), "test_helper")
+require File.join(File.dirname(__FILE__), *%w[.. app])
 
 class AppTest < Test::Unit::TestCase
   include JobRunnerTest
