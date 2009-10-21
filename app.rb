@@ -8,8 +8,16 @@ require File.join(File.dirname(__FILE__), *%w[lib configuration])
 require File.join(File.dirname(__FILE__), *%w[lib models])
 require File.join(File.dirname(__FILE__), *%w[lib database])
 
-$log = Logger.new(STDOUT)
-$log.level = Logger::DEBUG
+def logger
+  filename = "#{Sinatra::Base.environment}.log"
+  log_dir = File.join(File.dirname(__FILE__), "log")
+  FileUtils.mkdir_p(log_dir)
+  log = Logger.new(File.join(log_dir, filename))
+  log.level = Sinatra::Base.production? ? Logger::INFO : Logger::DEBUG
+  log
+end
+
+$log = logger
 
 def info(message)
   $log.info message
