@@ -9,12 +9,12 @@ require "lib/models"
 require "lib/database"
 
 def log
-  file = File.join(File.dirname(__FILE__), "log", "#{Sinatra::Base.environment}.log")
-  unless @logger
+  if ! @logger
+    file = "#{File.dirname(__FILE__)}/log/#{Sinatra::Base.environment}.log"
     @logger = Logger.new(file, "daily")
     @logger.level = Sinatra::Base.production? ? Logger::INFO : Logger::DEBUG
-  
-    # We need a new formatter as ActiveSupport overrides Ruby default
+    
+    # We need a new formatter as ActiveSupport overrides the Ruby default
     # (the dirty little bitch).
     @logger.formatter = Logger::Formatter.new
     @logger.datetime_format = "%b %d %H:%M:%S"
@@ -22,7 +22,9 @@ def log
   @logger
 end
 
-log.info "Starting up"
+def log_params(*names)
+  names.map { |name| "#{name}='#{params[name.to_s]}'" }.join(", ")
+end
 
 def find_job
   job = Job.find_by_id(params[:id])
@@ -37,7 +39,7 @@ def find_job_by_pid
 end
 
 def update_job(job)
-  log.info %Q{Updating job: #{job.id}, state='#{params["state"]}', message='#{params["message"]}'}
+  log.info %Q{Updating job: #{job.id}, #{log_params(:state, :message)}}
   job.update_attributes!(:state => params["state"], :message => params["message"])
   if params["state"] == "cancelled"
     log.info "Job cancelled: #{job.id}"
@@ -47,6 +49,8 @@ def update_job(job)
   Job.run_queued_jobs(job.name, config)
   nil
 end
+
+log.info "Starting up"
 
 post "/jobs/?" do
   begin
