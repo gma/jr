@@ -6,9 +6,9 @@ require "rubygems"
 require "sinatra"
 require "sys/proctable"
 
-require "lib/configuration"
-require "lib/models"
-require "lib/database"
+require File.join(File.dirname(__FILE__), *%w[lib configuration])
+require File.join(File.dirname(__FILE__), *%w[lib models])
+require File.join(File.dirname(__FILE__), *%w[lib database])
 
 include Sys
 
