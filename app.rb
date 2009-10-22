@@ -32,8 +32,8 @@ def find_job
   job
 end
 
-def find_job_by_pid
-  job = Job.find_by_pid(params[:pid])
+def find_running_job_by_pid
+  job = Job.find_by_state_and_pid("running", params[:pid])
   raise Sinatra::NotFound unless job
   job
 end
@@ -68,7 +68,7 @@ put "/jobs/:id" do
 end
 
 put "/jobs/pid/:pid" do
-  update_job(find_job_by_pid)
+  update_job(find_running_job_by_pid)
 end
 
 get "/jobs/:id" do

@@ -23,10 +23,18 @@ class AppTest < Test::Unit::TestCase
         "unskilled", File.join(File.dirname(__FILE__), "mock_command"), 2)
   end
 
-  def do_post(args = {})
+  def post_job(args = {})
     options = { :wait => true }.merge(args)
     post "/jobs", { :name => "unskilled", :arguments => "role=burger-flipper" }
     Process.wait if options[:wait]
+  end
+  
+  def put_job(job, params = {})
+    put "/jobs/#{job.id}", params
+  end
+  
+  def put_job_pid(job, params = {})
+    put "/jobs/pid/#{job.pid}", params
   end
   
   def timer(&block)
@@ -37,33 +45,33 @@ class AppTest < Test::Unit::TestCase
   
   context "POST /jobs" do
     should "create a new job with state running" do
-      assert_difference("Job.count") { do_post }
+      assert_difference("Job.count") { post_job }
     end
     
     should "return status 202 accepted" do
-      do_post
+      post_job
       assert_equal 202, last_response.status
     end
     
     should "return the job id" do
-      do_post
+      post_job
       assert_equal Job.last.id.to_s, last_response.body
     end
     
     should "run the command" do
-      do_post
+      post_job
       assert_equal "role=burger-flipper", File.open(@command_output).read.chomp
     end
     
     should "store the pid of the command" do
-      do_post
+      post_job
       assert_equal File.open(@command_pid).read.chomp.to_i, Job.last.pid
     end
 
     context "when concurrent limit reached" do
       setup do
-        @limit.times { do_post }
-        do_post(:wait => false)
+        @limit.times { post_job }
+        post_job(:wait => false)
       end
 
       should "queue a job" do
@@ -78,32 +86,32 @@ class AppTest < Test::Unit::TestCase
 
   context "PUT /jobs/123" do
     setup do
-      do_post
+      post_job
       @job = Job.last
     end
     
     should "return not found if job doesn't exist" do
-      put "/jobs/#{@job.id + 1}", :state => "complete"
+      put "/jobs/#{@job.id + 1}"
       assert last_response.not_found?
     end
     
     context "when the script sends complete" do
       should "update the job's state to complete" do
-        put "/jobs/#{@job.id}", :state => "complete"
+        put_job @job, :state => "complete"
         assert last_response.ok?
         assert_equal "complete", Job.find(@job.id).state
       end
     
       should "run queued jobs" do
-        @limit.times { do_post(:wait => false) }
-        put "/jobs/#{Job.first.id}", :state => "complete"
+        @limit.times { post_job(:wait => false) }
+        put_job Job.first, :state => "complete"
         assert_equal "running", Job.last.state
       end
     end
     
     context "when the script sends an error message" do
       should "store the error" do
-        put "/jobs/#{@job.id}", :state => "error", :message => "Borked"
+        put_job @job, :state => "error", :message => "Borked"
         @job.reload
         assert_equal "error", @job.state
         assert_equal "Borked", @job.message
@@ -112,7 +120,7 @@ class AppTest < Test::Unit::TestCase
     
     context "when the job is to be cancelled" do
       should "update the job's state to cancelled" do
-        put "/jobs/#{@job.id}", :state => "cancelled"
+        put_job @job, :state => "cancelled"
         assert_equal "cancelled", Job.find(@job.id).state
       end
       
@@ -121,7 +129,7 @@ class AppTest < Test::Unit::TestCase
         post "/jobs", :name => "part-time", :arguments => ""
         job = Job.last
         time_to_die = timer do
-          put "/jobs/#{job.id}", :state => "cancelled"
+          put_job job, :state => "cancelled"
           Process.waitall
         end
         long_winded_unix_death = 5  # allows the process plenty of time to die
@@ -132,32 +140,42 @@ class AppTest < Test::Unit::TestCase
 
   context "PUT /jobs/pid/123" do
     setup do
-      do_post
+      post_job
       @job = Job.last
+    end
+
+    should "have successful response if running job exists" do
+      put_job_pid @job, :state => "complete"
+      assert last_response.ok?
+    end
+    
+    should "return not found unless job state is running" do
+      @job.update_attribute(:state, "complete")
+      put_job_pid @job, :state => "complete"
+      assert last_response.not_found?
     end
 
     should "return not found if job doesn't exist" do
       put "/jobs/pid/#{@job.pid + 1}", :state => "complete"
       assert last_response.not_found?
     end
-
+    
     context "when the script sends complete" do
       should "update the job's status to complete" do
-        put "/jobs/pid/#{@job.pid}", :state => "complete"
-        assert last_response.ok?
+        put_job_pid @job, :state => "complete"
         assert_equal "complete", Job.find(@job.id).state
       end
 
       should "run queued jobs" do
-        @limit.times { do_post(:wait => false) }
-        put "/jobs/pid/#{Job.first.pid}", :state => "complete"
+        @limit.times { post_job(:wait => false) }
+        put_job_pid Job.first, :state => "complete"
         assert_equal "running", Job.last.state
       end
     end
 
     context "when the script sends an error message" do
       should "store the error" do
-        put "/jobs/pid/#{@job.pid}", :state => "error", :message => "Borked"
+        put_job_pid @job, :state => "error", :message => "Borked"
         @job.reload
         assert_equal "error", @job.state
         assert_equal "Borked", @job.message
@@ -166,7 +184,7 @@ class AppTest < Test::Unit::TestCase
     
     context "when the job is to be cancelled" do
       should "update the job's state to cancelled" do
-        put "/jobs/pid/#{@job.pid}", :state => "cancelled"
+        put_job_pid @job, :state => "cancelled"
         assert_equal "cancelled", Job.find(@job.id).state
       end
       
@@ -175,7 +193,7 @@ class AppTest < Test::Unit::TestCase
         post "/jobs", :name => "part-time", :arguments => ""
         job = Job.last
         time_to_die = timer do
-          put "/jobs/pid/#{job.pid}", :state => "cancelled"
+          put_job_pid job, :state => "cancelled"
           Process.waitall
         end
         long_winded_unix_death = 5  # allows the process plenty of time to die
@@ -186,7 +204,7 @@ class AppTest < Test::Unit::TestCase
 
   context "GET /jobs/123" do
     setup do
-      do_post
+      post_job
       @job = Job.last
     end
     
