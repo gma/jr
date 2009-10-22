@@ -34,14 +34,14 @@ namespace :gems do
     GemInstaller.require_gem "sinatra", :version => "0.9.4"
     GemInstaller.require_gem "activerecord", :version => "2.3.4"
     GemInstaller.require_gem "sinatra-activerecord", 
-                             :version => "0.1.2", 
+                             :version => "0.1.2",
                              :source => "http://gemcutter.org"
-    GemInstaller.require_gem "sys-proctable", :version => "0.7.6"
+    GemInstaller.require_gem "sys-proctable"
   end
 end
 
 class GemInstaller
-  def self.require_gem(name, options)
+  def self.require_gem(name, options = {})
     installed = if options.has_key?(:version)
       Gem.available?(name, options[:version])
     else
