@@ -4,9 +4,13 @@ require "erb"
 
 require "rubygems"
 require "sinatra"
+require "sys/proctable"
+
 require "lib/configuration"
 require "lib/models"
 require "lib/database"
+
+include Sys
 
 def log
   if ! @logger
@@ -50,6 +54,15 @@ def update_job(job)
   nil
 end
 
+def mark_dangling_jobs_complete
+  Job.find_all_by_state("running").each do |job|
+    if ! ProcTable.ps(job.pid)
+      log.warn("Marking dangling job complete: #{job.id} (pid was #{job.pid})")
+      job.update_attributes!(:state => "complete")
+    end
+  end
+end
+
 log.info "Starting up"
 
 post "/jobs/?" do
@@ -72,6 +85,7 @@ put "/jobs/pid/:pid" do
 end
 
 get "/jobs/:id" do
+  mark_dangling_jobs_complete
   job = find_job
   response = job.message ? "#{job.state}: #{job.message}" : job.state
   log.info "Checked state of job #{job.id}: #{response}"

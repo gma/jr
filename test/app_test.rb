@@ -37,6 +37,10 @@ class AppTest < Test::Unit::TestCase
     put "/jobs/pid/#{job.pid}", params
   end
   
+  def get_job(job)
+    get "/jobs/#{job.id}"
+  end
+  
   def timer(&block)
     start = Time.now
     yield
@@ -204,8 +208,9 @@ class AppTest < Test::Unit::TestCase
 
   context "GET /jobs/123" do
     setup do
-      post_job
-      @job = Job.last
+      @pid = 1234
+      @state = "queued"
+      @job = Job.create!(:name => "job", :state => @state, :pid => @pid)
     end
     
     should "return not found if job doesn't exist" do
@@ -214,19 +219,39 @@ class AppTest < Test::Unit::TestCase
     end
     
     should "return the job status" do
-      get "/jobs/#{@job.id}"
-      assert_equal "running", last_response.body
+      get_job @job
+      assert_equal @state, last_response.body
     end
     
     context "when job has a message" do
       setup do
         @message = "sorted"
-        @job.update_attributes!(:state => "complete", :message => @message)
+        @job.update_attributes!(:state => @state, :message => @message)
       end
       
-      should "return the job's message" do
-        get "/jobs/#{@job.id}"
-        assert_equal "complete: #{@message}", last_response.body
+      should "return the job's state and message" do
+        get_job @job
+        assert_equal "#{@state}: #{@message}", last_response.body
+      end
+    end
+    
+    context "when job running" do
+      setup do
+        @job.update_attributes!(:state => "running")
+      end
+      
+      should "mark running (but dead) jobs as complete" do
+        ProcTable.stubs(:ps).returns(nil)
+        get_job @job
+        @job.reload
+        assert_equal "complete", @job.state
+      end
+      
+      should "not mark jobs that are still running as complete" do
+        ProcTable.stubs(:ps).returns(true)  # ps() actually returns a struct
+        get_job @job
+        @job.reload
+        assert_equal "running", @job.state
       end
     end
   end  
