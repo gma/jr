@@ -4,13 +4,10 @@ require "erb"
 
 require "rubygems"
 require "sinatra"
-require "sys/proctable"
 
 require File.join(File.dirname(__FILE__), *%w[lib configuration])
 require File.join(File.dirname(__FILE__), *%w[lib models])
 require File.join(File.dirname(__FILE__), *%w[lib database])
-
-include Sys
 
 def log
   if ! @logger
@@ -54,9 +51,15 @@ def update_job(job)
   nil
 end
 
+class ProcessFinder
+  def self.process_running?(pid)
+    ! %x{ps | awk '{ print $1 }' | grep #{pid}}.blank?
+  end
+end
+
 def mark_dangling_jobs_complete
   Job.find_all_by_state("running").each do |job|
-    if ! ProcTable.ps(job.pid)
+    if ! ProcessFinder.process_running?(job.pid)
       log.warn("Marking dangling job complete: #{job.id} (pid was #{job.pid})")
       job.update_attributes!(:state => "complete")
     end

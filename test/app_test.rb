@@ -241,14 +241,14 @@ class AppTest < Test::Unit::TestCase
       end
       
       should "mark running (but dead) jobs as complete" do
-        ProcTable.stubs(:ps).returns(nil)
+        ProcessFinder.stubs(:process_running?).returns(false)
         get_job @job
         @job.reload
         assert_equal "complete", @job.state
       end
       
       should "not mark jobs that are still running as complete" do
-        ProcTable.stubs(:ps).returns(true)  # ps() actually returns a struct
+        ProcessFinder.stubs(:process_running?).returns(true)
         get_job @job
         @job.reload
         assert_equal "running", @job.state
