@@ -36,7 +36,6 @@ namespace :gems do
     GemInstaller.require_gem "sinatra-activerecord", 
                              :version => "0.1.2",
                              :source => "http://gemcutter.org"
-    GemInstaller.require_gem "sys-proctable"
   end
 end
 
