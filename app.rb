@@ -9,6 +9,18 @@ require File.join(File.dirname(__FILE__), *%w[lib configuration])
 require File.join(File.dirname(__FILE__), *%w[lib models])
 require File.join(File.dirname(__FILE__), *%w[lib database])
 
+helpers do
+  def log_errors
+    begin
+      yield
+    rescue SystemExit
+      raise
+    rescue Exception => e
+      log.error(e.to_s)
+    end
+  end
+end
+
 def log
   if ! @logger
     file = "#{File.dirname(__FILE__)}/log/#{Sinatra::Base.environment}.log"
@@ -69,28 +81,32 @@ end
 log.info "Starting up"
 
 post "/jobs/?" do
-  begin
-    config = JobRunner::Configuration.job(params[:name])
-    job = Job.process(params[:name], config, params[:arguments])
-    status(202)  # accepted
-    job.id.to_s
-  rescue JobRunner::JobNotFoundError => exception
-    log.error "Exception caught: #{exception}"
+  log_errors do
+    begin
+      config = JobRunner::Configuration.job(params[:name])
+      job = Job.process(params[:name], config, params[:arguments])
+      status(202)  # accepted
+      job.id.to_s
+    rescue JobRunner::JobNotFoundError => exception
+      log.error "Exception caught: #{exception}"
+    end
   end
 end
 
 put "/jobs/:id" do
-  update_job(find_job)
+  log_errors { update_job(find_job) }
 end
 
 put "/jobs/pid/:pid" do
-  update_job(find_running_job_by_pid)
+  log_errors { update_job(find_running_job_by_pid) }
 end
 
 get "/jobs/:id" do
-  mark_dangling_jobs_complete
-  job = find_job
-  response = job.message ? "#{job.state}: #{job.message}" : job.state
-  log.info "Checked state of job #{job.id}: #{response}"
-  response
+  log_errors do
+    mark_dangling_jobs_complete
+    job = find_job
+    response = job.message ? "#{job.state}: #{job.message}" : job.state
+    log.info "Checked state of job #{job.id}: #{response}"
+    response
+  end
 end
