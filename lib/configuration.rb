@@ -16,8 +16,12 @@ module JobRunner
     end
     
     def self.job(name)
-      jobs = load_yaml(file)
+      jobs = load_yaml(file)["jobs"] || {}
       jobs[name] or raise JobNotFoundError.new("job not found: #{name}") 
+    end
+    
+    def self.hoptoad_key
+      load_yaml(file)["hoptoad_key"]
     end
   end
 end

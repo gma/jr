@@ -26,8 +26,24 @@ module JobRunnerTest
     test_file = "/tmp/jr-config.yml"
     JobRunner::Configuration.stubs(:file).returns(test_file)
     File.open(test_file, "w") do |file|
-      file.write("#{name}:\n  command: #{command}\n  concurrent_limit: #{limit}")
+      file.write <<-EOF
+jobs:
+  #{name}:
+    command: #{command}
+    concurrent_limit: #{limit}
+      EOF
     end
     [name, command, limit]
+  end
+  
+  def define_hoptoad_key(key)
+    test_file = "/tmp/jr-config.yml"
+    JobRunner::Configuration.stubs(:file).returns(test_file)
+    File.open(test_file, "w") do |file|
+      file.write <<-EOF
+hoptoad_key:
+  #{key}
+      EOF
+    end
   end
 end

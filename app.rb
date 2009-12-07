@@ -9,14 +9,24 @@ require File.join(File.dirname(__FILE__), *%w[lib configuration])
 require File.join(File.dirname(__FILE__), *%w[lib models])
 require File.join(File.dirname(__FILE__), *%w[lib database])
 
+def log_error_to_hoptoad(error)
+  begin
+    require "toadhopper"
+    Toadhopper.api_key = JobRunner::Configuration.hoptoad_key
+    Toadhopper.post!(error)
+  rescue LoadError
+  end
+end
+
 helpers do
   def log_errors
     begin
       yield
     rescue SystemExit
       raise
-    rescue Exception => e
-      log.error(e.to_s)
+    rescue Exception => error
+      log_error_to_hoptoad(error)
+      log.error(error.to_s)
     end
   end
 end
