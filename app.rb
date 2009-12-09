@@ -26,7 +26,8 @@ helpers do
       raise
     rescue Exception => error
       log_error_to_hoptoad(error)
-      log.error(error.to_s)
+      log.error("#{request.request_method} #{request.path} raised #{error}")
+      raise
     end
   end
 end
@@ -54,15 +55,11 @@ def log_params(*names)
 end
 
 def find_job
-  job = Job.find_by_id(params[:id])
-  raise Sinatra::NotFound unless job
-  job
+  Job.find_by_id(params[:id]) || raise(Sinatra::NotFound)
 end
 
 def find_running_job_by_pid
-  job = Job.find_by_state_and_pid("running", params[:pid])
-  raise Sinatra::NotFound unless job
-  job
+  Job.find_by_state_and_pid("running", params[:pid]) || raise(Sinatra::NotFound)
 end
 
 def update_job(job)
