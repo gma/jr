@@ -34,7 +34,11 @@ end
 def log
   if ! @logger
     file = "#{File.dirname(__FILE__)}/log/#{Sinatra::Base.environment}.log"
-    @logger = Logger.new(file, "daily")
+    begin
+      @logger = Logger.new(file, "daily")
+    rescue Logger::ShiftingError  # yesterday's file exists
+      @logger = Logger.new(file)
+    end
     @logger.level = Sinatra::Base.production? ? Logger::INFO : Logger::DEBUG
     
     # We need a new formatter as ActiveSupport overrides the Ruby default
