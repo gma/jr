@@ -9,6 +9,8 @@ require File.join(File.dirname(__FILE__), *%w[lib configuration])
 require File.join(File.dirname(__FILE__), *%w[lib models])
 require File.join(File.dirname(__FILE__), *%w[lib database])
 
+set :lock, true
+
 def log_error_to_hoptoad(error)
   begin
     require "toadhopper"
