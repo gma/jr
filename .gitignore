@@ -1,4 +1,6 @@
 ._*
 .DS_Store
+bin
 config/config.yml
 log
+vendor/gems

@@ -1,8 +1,9 @@
+require File.join(File.dirname(__FILE__), *%w[vendor gems environment])
+
 require "logger"
 require "yaml"
 require "erb"
 
-require "rubygems"
 require "sinatra"
 
 require File.join(File.dirname(__FILE__), *%w[lib configuration])

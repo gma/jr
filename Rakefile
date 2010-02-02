@@ -21,37 +21,3 @@ namespace :db do
     system "mysqladmin create jr_#{environ}"
   end
 end
-
-namespace :gems do
-  desc "Install dependencies (set RACK_ENV=test for tests)"
-  task :install do
-    if ENV["RACK_ENV"] == "test"
-      GemInstaller.require_gem "mocha", :version => "0.9.8"
-      GemInstaller.require_gem "rack-test", :version => "0.5.0"
-      GemInstaller.require_gem "shoulda", :version => "2.10.3"
-    end
-    GemInstaller.require_gem "sinatra", :version => "0.9.4"
-    GemInstaller.require_gem "activerecord", :version => "2.3.4"
-    GemInstaller.require_gem "sinatra-activerecord", :version => "0.1.2"
-  end
-end
-
-class GemInstaller
-  def self.require_gem(name, options = {})
-    installed = if options.has_key?(:version)
-      Gem.available?(name, options[:version])
-    else
-      Gem.available?(name)
-    end
-    installed || install(name, options)
-  end
-  
-  def self.install(name, options)
-    $stdout.sync = true
-    cmd = "gem install " << name
-    cmd << " --version #{options[:version]}" if options[:version]
-    cmd << " --source #{options[:source]}" if options[:source]
-    puts cmd
-    system(cmd)
-  end
-end
