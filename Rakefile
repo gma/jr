@@ -1,12 +1,7 @@
+require File.join(File.dirname(__FILE__), *%w[vendor gems environment])
 require "rake/testtask"
-begin
-  require "sinatra/activerecord/rake"
-  require "app"
-rescue LoadError
-  unless ARGV.detect { |arg| arg == "gems:install" }
-    $stderr.write("gem dependencies not met -- try rake gems:install\n")
-  end
-end
+require "sinatra/activerecord/rake"
+require "app"
 
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
