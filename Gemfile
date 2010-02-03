@@ -1,4 +1,4 @@
-disable_system_gems
+# disable_system_gems
 
 gem "activerecord", "2.3.4"
 gem "mysql", "2.8.1"
