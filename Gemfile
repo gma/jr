@@ -1,7 +1,8 @@
 disable_system_gems
 
-gem "sinatra", "0.9.4"
 gem "activerecord", "2.3.4"
+gem "mysql", "2.8.1"
+gem "sinatra", "0.9.4"
 gem "sinatra-activerecord", "0.1.2"
 
 only :test do
