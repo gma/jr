@@ -101,6 +101,9 @@ post "/jobs/?" do
       job = Job.process(params[:name], config, params[:arguments])
       status(202)  # accepted
       job.id.to_s
+    rescue Mysql::Error
+      ActiveRecord::Base.connection.reconnect!
+      retry
     rescue JobRunner::JobNotFoundError => exception
       log.error "Exception caught: #{exception}"
     end
