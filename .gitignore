@@ -1,4 +1,5 @@
 ._*
+.bundle
 .DS_Store
 bin
 config/config.yml
