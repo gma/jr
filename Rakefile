@@ -1,7 +1,6 @@
-require File.join(File.dirname(__FILE__), *%w[vendor gems environment])
+require "app"
 require "rake/testtask"
 require "sinatra/activerecord/rake"
-require "app"
 
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
