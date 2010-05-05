@@ -125,6 +125,7 @@ end
 
 get "/jobs/:id" do
   log_errors do
+    Job.reap_children
     mark_dangling_jobs_complete
     job = find_job
     response = job.message ? "#{job.state}: #{job.message}" : job.state
